@@ -1,0 +1,115 @@
+#hashcheck {
+	position: absolute !important;
+	white-space: pre-wrap; 
+	box-sizing: border-box;
+	top: auto; 
+	left: auto;
+	overflow-y: hidden;
+	padding: 2px 0 0 2px;
+	border-color: transparent !important;
+	font-family: monospace;
+	font-size: 14px;
+	z-index: 0 !important;
+	cursor: crosshair;
+}
+
+.hashcheck-error {
+	background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA+gAAAACCAMAAAD8SgavAAAAA1BMVEXzurm8b71JAAAAFklEQVR4AWMYBmAUjIJRMApGwSgYBQAH0gABH64/VAAAAABJRU5ErkJggg==);
+	background-repeat: no-repeat;
+	background-position: bottom left;
+}
+
+.hashcheck-error-hovered-line {
+	background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA+gAAAACCAYAAADLlPadAAAABmJLR0QA/wD/AP+gvaeTAAAAK0lEQVRYhe3OMQEAIAwDsA6DHPh/ZoTJ2JMoSPW7PwAAAMCqsx0AAAAAkgHerQKHq3BtYQAAAABJRU5ErkJggg==);
+}
+
+.hashcheck-error-hovered-background {
+	background-color: rgb(248, 212, 211);
+}
+
+.hashcheck-popup {
+	display: none;
+	position: absolute;
+	min-width: 400px;
+	margin-top: 5px;
+	font: 22px Lato, sans-serif;
+	z-index: 9999;
+	background: #ffffff;
+	box-shadow: 0 0 8px rgba(0, 0, 0, 0.247059);
+}
+
+.hashcheck-popup ul {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 20px;
+	min-width: 400px;
+	list-style: none;
+}
+
+.hashcheck-popup ul li {
+	box-sizing: border-box;
+	line-height: 30px;
+	margin: 0;
+	padding: 0 0 0 5px;
+}
+
+.hashcheck-popup ul li:first-child .error,
+.hashcheck-popup ul li:first-child .arrow {
+	visibility: visible;
+	cursor: pointer;
+}
+
+.hashcheck-popup ul li .error {
+	visibility: hidden;
+	color: rgb(226, 83, 79);
+	text-decoration: line-through;
+}
+
+.hashcheck-popup ul li .arrow {
+	visibility: hidden;
+	color: gray;
+}
+
+.hashcheck-popup ul li .correction {
+	color: rgb(43, 182, 115);
+	cursor: pointer;
+}
+/*
+.hashcheck-popup ul li:first-child:hover .error,
+.hashcheck-popup ul li:first-child:hover .arrow,
+.hashcheck-popup ul li:hover .correction {
+	border-bottom: 2px solid rgb(43, 182, 115);
+}*/
+
+.hashcheck-popup ul li:first-child:hover > .error,
+.hashcheck-popup ul li:first-child:hover > .arrow,
+.hashcheck-popup ul li:first-child:hover > .correction,
+.hashcheck-popup ul li .correction:hover {
+	border-bottom: 2px solid rgb(43, 182, 115);
+}
+
+.hashcheck-popup .hashcheck-popup-footer {
+	padding: 20px;
+	border-top: 1px solid lightgrey;
+	font: 12px Lato sans-serif;
+	text-transform: uppercase;
+}
+
+.hashcheck-popup .hashcheck-popup-footer span{
+	padding-right: 20px;
+	cursor: pointer;
+}
+
+.hashcheck-popup .hashcheck-popup-footer span:last-child {
+	padding-right: 0;
+}
+
+.hashcheck-popup .hashcheck-popup-footer span a{
+	text-decoration: none;
+	color: rgb(226, 83, 79);
+}
+
+.hashcheck-popup .hashcheck-popup-footer span a:hover{
+	text-decoration: none;
+	color: rgb(213, 70, 66);
+}

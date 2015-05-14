@@ -1,0 +1,36 @@
+{
+  "manifest_version": 2,
+
+  "name": "Hašek provjera pravopisa",
+  "description": "Ovo proširenje koristi Hrvatski akademski spelling checker za provjeru pravopisa.",
+  "version": "0.2",
+
+  "browser_action": {
+    "default_icon": {
+        "19": "icon19.png",
+        "48": "icon48.png"
+    },
+    "default_popup": "main.html"
+  },
+  "permissions": [
+    "activeTab",
+    //"https://ajax.googleapis.com/",
+    "https://hacheck.tel.fer.hr/*"    
+  ],
+  "web_accessible_resources": ["main.css"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "exclude_globs": ["http*://www.google.*", "*hacheck.tel.fer.hr*"],
+      "css": ["main.css"],
+      "js": ["script.js"],
+      "all_frames": true
+    }
+  ],
+  "icons": {
+      "16": "icon16.png",
+      "32": "icon32.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+   }
+}
