@@ -13,125 +13,6 @@ function Errors() {
 }
 Errors.prototype = Array.prototype;
 
-function Editor() {
-	this.backgroundDiv = null;
-	this.formElement = null;
-	this.contenteditable = false;
-	this.errorElements = new Array();
-	this.oldInputValue = "";
-	this.newInputValue = "";
-
-	this.checkFormElementType = function() {
-		if(this.formElement.tagName == "DIV" || this.formElement.tagName == "BODY") this.contenteditable = true;
-	}
-
-	this.prepareTextbox = function() {
-		this.formElement.setAttribute('data-hashcheck', 'true');
-		if(!this.contenteditable) {
-			this.backgroundDiv = this.formElement.ownerDocument.createElement("div");
-			this.backgroundDiv.setAttribute('data-hashcheck-id', editors.length);
-			var style = this.formElement.ownerDocument.defaultView.getComputedStyle(this.formElement, null);
-
-			this.backgroundDiv.style.cssText = this.formElement.style.cssText + " font-family: " + style.getPropertyValue('font-family') + 
-									"; font-size: " + style.getPropertyValue('font-size') + "; text-align: " + style.getPropertyValue('text-align') + "; line-height: " + style.getPropertyValue('line-height') + 
-									"; padding: " + style.getPropertyValue('padding') + "; border: " + style.getPropertyValue('border') + 
-									"; border-width: " + style.getPropertyValue('border-width') +  "; border-style: " + style.getPropertyValue('border-style') + 
-									/*"; margin: " + style.getPropertyValue('margin') + */"; top: " + this.formElement.offsetTop + "px; left: " + this.formElement.offsetLeft + 
-									"px; height: " + this.formElement.offsetHeight  + "px; width: " + this.formElement.offsetWidth  
-									+ "px; background: " + style.getPropertyValue('background-color') + ";";
-			this.formElement.parentNode.insertBefore(this.backgroundDiv, this.formElement);
-		}
-		//overflow: auto;
-		this.formElement.style.cssText = this.formElement.style.cssText + "z-index: 1; position: relative; transition: none;     background: transparent !important;";
-
-		/*this.formElement.addEventListener("keydown", function() {
-			console.log(this.formElement.ownerDocument.getSelection().anchorNode.parentNode.tagName); 
-		});*/
-		/*this.formElement.addEventListener("keydown", function(e) {
-			var node = this.formElement.ownerDocument.getSelection().anchorNode.parentNode;
-			if(node.className.indexOf("hashcheck-error") > -1) {
-				if(e.keyCode == 32) {
-					var offset = this.formElement.ownerDocument.getSelection().anchorOffset;
-					if(offset == 0) {
-						node.parentNode.insertBefore(this.formElement.ownerDocument.createTextNode("\u00a0"), node);
-						e.preventDefault();
-						flag = true;
-					} else if(offset == node.innerText.length) {
-						var position = node.innerText.length;
-						var textNode = this.formElement.ownerDocument.createTextNode("\u00a0");
-						node.parentNode.insertBefore(textNode, node.nextSibling);
-						var sel = this.formElement.ownerDocument.getSelection();
-						var range = document.createRange();
-			            range.setStart(textNode, 1);
-			            range.setEnd(textNode, 1);
-			            sel.removeAllRanges();
-			            sel.addRange(range);
-						e.preventDefault();
-						flag = true;
-					}
-				}
-			}
-		});*/
-		this.formElement.addEventListener("keypress", function(e) {
-			var node = this.formElement.ownerDocument.getSelection().anchorNode.parentNode;
-			if(node.className.indexOf("hashcheck-error") > -1) {
-				var character = String.fromCharCode(e.charCode);
-				if(character.match(/[^a-zčćžšđA-ZČĆŽŠĐ]/g)) {
-					var offset = this.formElement.ownerDocument.getSelection().anchorOffset;
-					var textnode;
-					if(character != " ") {
-						textNode = this.formElement.ownerDocument.createTextNode(character);
-					} else {
-						textNode = this.formElement.ownerDocument.createTextNode("\u00a0");
-					}
-					if(offset == 0) {
-						
-						node.parentNode.insertBefore(textNode, node);
-						e.preventDefault();
-						flag = true;
-					} else if(offset == node.innerText.length) {
-						var position = node.innerText.length;
-						node.parentNode.insertBefore(textNode, node.nextSibling);
-						var sel = this.formElement.ownerDocument.getSelection();
-						var range = this.formElement.ownerDocument.createRange();
-			            range.setStart(textNode, 1);
-			            range.setEnd(textNode, 1);
-			            sel.removeAllRanges();
-			            sel.addRange(range);
-						e.preventDefault();
-						flag = true;
-					}
-				}
-			}
-		});
-		this.formElement.addEventListener("input", function(e) {
-			var node = this.formElement.ownerDocument.getSelection().anchorNode.parentNode;
-			if(!flag && node.className.indexOf("hashcheck-error") > -1) {
-				var position = this.formElement.ownerDocument.getSelection().anchorOffset;
-				var textNode = this.formElement.ownerDocument.createTextNode(node.innerText);
-				node.parentNode.insertBefore(textNode, node);
-				node.parentNode.removeChild(node);
-				var sel = this.formElement.ownerDocument.getSelection();
-				var range = sel.getRangeAt(0);
-	            range.deleteContents();
-
-	            range.setStart(textNode, position);
-	            range.setEnd(textNode, position);
-	            sel.removeAllRanges();
-	            sel.addRange(range);
-			}
-			flag = false;
-		});
-		this.formElement.addEventListener("mousemove", checkHoverEvent);
-		this.formElement.addEventListener("mouseout", checkHoverEvent);
-		this.formElement.addEventListener("scroll", refreshEditorDivScroll);
-	}
-}
-
-function Editors() {
-}
-Editor.prototype = Array.prototype;
-
 var requestTime;
 
 window.addEventListener("input", function(e) {
@@ -172,7 +53,7 @@ window.addEventListener("mouseup", function() {
 		if (typeof textbox !== "undefined" && ((typeof textbox.value != "undefined" && textbox.value == "") || (typeof textbox.textContent != "undefined" && textbox.textContent == ""))) {
 	    	getInputValue(null);
 	    }
-	}, 50);
+	}, 10);
 }, true);
 
 window.addEventListener("keyup", function(e) {
@@ -182,37 +63,34 @@ window.addEventListener("keyup", function(e) {
 }, true);
 
 /**
-*** Gets input value from contentscript oninput event listener and finds the new part of the input.
+*** Gets input value from contentscript oninput event listener and find the new part of the input.
  */
 var timeoutHandle = null;
 var textbox;
 var editorDiv;
 var inputValue = "", newInputValue = "";
 var length = false;
-var editors = new Editors();
-// RESUME: napravi polje editora a id dohvatiš iz data-hashcheck-id i njega dalje propagiraš cijelim putem
-function getInputValue(formElement) {
+
+function getInputValue(tb) {
 	//If there is no new input after 2000ms send new input to server.
 	clearTimeout(timeoutHandle);
 	timeoutHandle = setTimeout(createXmlRequest, 2000);
-	var editor = null;
 
 	//If the event fired was from input instead of others, get the textbox.
-	if(formElement != null) {
-		if(formElement.getAttribute('data-hashcheck') == null) {
-			editor = new Editor();
-			editor.formElement = formElement;
-			editor.prepareTextbox;
+	if(tb != null) {
+		textbox = tb;
+		if(textbox.getAttribute('data-hashcheck') == null) {
+			prepareTextbox();
 			preparePopup();
 		} else {
-			editor = editors[formElement.previousSibling.getAttribute('data-hashcheck-id')];
+			editorDiv = textbox.previousSibling;
 		}
 	}
 
 	//If the textbox is a div or body(inside iframe), remove all span/div tags (those are the only ones that should be there), else it is a textarea or input
-	if(!editor.contenteditable) {
-		editor.newInputValue = editor.formElement.value;
-		editor.backgroundDiv.innerHTML = editor.newInputValue;
+	if(textbox.tagName != "DIV" && textbox.tagName != "BODY") {
+		newInputValue = textbox.value;
+		editorDiv.innerHTML = newInputValue;
 		refreshEditorDivSize();
 		refreshEditorDivPosition();
 		refreshEditorDivScroll();
@@ -272,7 +150,107 @@ function markErrors() {
  */
 var mouseOutTimer;
 var flag = false;
+function prepareTextbox() {
+	textbox.setAttribute('data-hashcheck', 'true');
+	if(textbox.tagName != "DIV" && textbox.tagName != "BODY") {
+		editorDiv = textbox.ownerDocument.createElement("div");
+		editorDiv.id = 'hashcheck';
+		var style = textbox.ownerDocument.defaultView.getComputedStyle(textbox, null);
 
+		editorDiv.style.cssText = textbox.style.cssText + " font-family: " + style.getPropertyValue('font-family') + 
+								"; font-size: " + style.getPropertyValue('font-size') + "; text-align: " + style.getPropertyValue('text-align') + "; line-height: " + style.getPropertyValue('line-height') + 
+								"; padding: " + style.getPropertyValue('padding') + "; border: " + style.getPropertyValue('border') + 
+								"; border-width: " + style.getPropertyValue('border-width') +  "; border-style: " + style.getPropertyValue('border-style') + 
+								/*"; margin: " + style.getPropertyValue('margin') + */"; top: " + textbox.offsetTop + "px; left: " + textbox.offsetLeft + 
+								"px; height: " + textbox.offsetHeight  + "px; width: " + textbox.offsetWidth  
+								+ "px; background: " + style.getPropertyValue('background-color') + ";";
+		textbox.parentNode.insertBefore(editorDiv, textbox);
+	}
+	//overflow: auto;
+	textbox.style.cssText = textbox.style.cssText + "z-index: 1; position: relative; transition: none;     background: transparent !important;";
+
+	/*textbox.addEventListener("keydown", function() {
+		console.log(textbox.ownerDocument.getSelection().anchorNode.parentNode.tagName); 
+	});*/
+	/*textbox.addEventListener("keydown", function(e) {
+		var node = textbox.ownerDocument.getSelection().anchorNode.parentNode;
+		if(node.className.indexOf("hashcheck-error") > -1) {
+			if(e.keyCode == 32) {
+				var offset = textbox.ownerDocument.getSelection().anchorOffset;
+				if(offset == 0) {
+					node.parentNode.insertBefore(textbox.ownerDocument.createTextNode("\u00a0"), node);
+					e.preventDefault();
+					flag = true;
+				} else if(offset == node.innerText.length) {
+					var position = node.innerText.length;
+					var textNode = textbox.ownerDocument.createTextNode("\u00a0");
+					node.parentNode.insertBefore(textNode, node.nextSibling);
+					var sel = textbox.ownerDocument.getSelection();
+					var range = document.createRange();
+		            range.setStart(textNode, 1);
+		            range.setEnd(textNode, 1);
+		            sel.removeAllRanges();
+		            sel.addRange(range);
+					e.preventDefault();
+					flag = true;
+				}
+			}
+		}
+	});*/
+	textbox.addEventListener("keypress", function(e) {
+		var node = textbox.ownerDocument.getSelection().anchorNode.parentNode;
+		if(node.className.indexOf("hashcheck-error") > -1) {
+			var character = String.fromCharCode(e.charCode);
+			if(character.match(/[^a-zčćžšđA-ZČĆŽŠĐ]/g)) {
+				var offset = textbox.ownerDocument.getSelection().anchorOffset;
+				var textnode;
+				if(character != " ") {
+					textNode = textbox.ownerDocument.createTextNode(character);
+				} else {
+					textNode = textbox.ownerDocument.createTextNode("\u00a0");
+				}
+				if(offset == 0) {
+					
+					node.parentNode.insertBefore(textNode, node);
+					e.preventDefault();
+					flag = true;
+				} else if(offset == node.innerText.length) {
+					var position = node.innerText.length;
+					node.parentNode.insertBefore(textNode, node.nextSibling);
+					var sel = textbox.ownerDocument.getSelection();
+					var range = textbox.ownerDocument.createRange();
+		            range.setStart(textNode, 1);
+		            range.setEnd(textNode, 1);
+		            sel.removeAllRanges();
+		            sel.addRange(range);
+					e.preventDefault();
+					flag = true;
+				}
+			}
+		}
+	});
+	textbox.addEventListener("input", function(e) {
+		var node = textbox.ownerDocument.getSelection().anchorNode.parentNode;
+		if(!flag && node.className.indexOf("hashcheck-error") > -1) {
+			var position = textbox.ownerDocument.getSelection().anchorOffset;
+			var textNode = textbox.ownerDocument.createTextNode(node.innerText);
+			node.parentNode.insertBefore(textNode, node);
+			node.parentNode.removeChild(node);
+			var sel = textbox.ownerDocument.getSelection();
+			var range = sel.getRangeAt(0);
+            range.deleteContents();
+
+            range.setStart(textNode, position);
+            range.setEnd(textNode, position);
+            sel.removeAllRanges();
+            sel.addRange(range);
+		}
+		flag = false;
+	});
+	textbox.addEventListener("mousemove", checkHoverEvent);
+	textbox.addEventListener("mouseout", checkHoverEvent);
+	textbox.addEventListener("scroll", refreshEditorDivScroll);
+}
 
 /**
 *** Refreshes the scroll value of the background editor div.
@@ -347,7 +325,7 @@ var hovered;
 function checkHoverEvent(e) {
 	refreshEditorDivSize();
 	refreshEditorDivPosition();
-	var editorDiv = e.target.previousSibling;
+
 	// TODO: hover nakon 200ms?
 	for (var i = 0; i < elements.length; i++) {
 		if(elements[i].getAttribute('data-error-number') < errors.length) {
@@ -446,66 +424,9 @@ function refreshPopup(element) {
 	}
 }
 
-/**
-*** Creates an xml request with the new part of the input generated from the getInputValue function
- */
-
-function createXmlRequest() {
-	clearTimeout(timeoutHandle);	
-
-	var diff = textDiff(inputValue, newInputValue);
-	
-	var output = newInputValue.slice(diff[0], diff[0] + diff[2]);
-
-	if(output) {
-		var xhr = new XMLHttpRequest();
-		addReadyStateChangeHandler(xhr, editorDiv);
-		xhr.open("POST", "https://hacheck.tel.fer.hr/xml.pl", true);
-		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-		xhr.send("textarea=" + output);
-		requestTime = (new Date).getTime();
-	}
-	inputValue = newInputValue;
-}
-
-/**
- * Gets the difference between two strings in whole words.
- * @param  {String} a first string - in this case the old input
- * @param  {String} b second string - in this case the new input
- * @return {Array} [beggining of difference, length of difference in a, length of difference in b]
- */
-function textDiff(a, b) {
-	for (var c = 0,	d = a.length, e = b.length; a[c] && a[c] == b[c]; c++);
-	for (; d > c & e > c & a[d - 1] == b[e - 1]; d--) e--;
-	while(c>0 && new RegExp("([a-zčćžšđA-ZČĆŽŠĐ])").test(b[c-1])) c--;
-	while(e<(b.length-1) && new RegExp("([a-zčćžšđA-ZČĆŽŠĐ])").test(b[e])) e++;
-	return [c, d - c, e - c];
-}
-
-/**
- * Checks if the ready state change signals a successful connection with the server and gets the response
- * @param  {[type]} xhrEvent Event triggered by a readystate change of the XMLHttpRequest
- */
-function addReadyStateChangeHandler(xhr, editorDiv) {
-	xhr.onreadystatechange = function (xhrEvent) {
-		//try {
-			if(xhrEvent.target.readyState == 4) {
-				if(xhrEvent.target.status == 200) {
-					checkErrors(xhrEvent.target, editorDiv);
-				} else {
-					console.log("Xml request error code " + xhrEvent.target.status + ". Problem connecting to the hashcheck server.");
-				}				
-			}
-		//} catch (e) {
-		//	 console.log("Caught Exception: " + e.description);
-		//}
-	}
-}
-
-
 var errors = new Errors();
 var errorCount = 0;
-function checkErrors(response, editorDiv) {
+function checkErrors(response) {
 	console.log((new Date).getTime() - requestTime);
 	var newErrors = response.responseXML.getElementsByTagName("results")[0].children;
 	var errorExists = false;

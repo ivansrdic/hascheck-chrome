@@ -23,7 +23,7 @@
       "matches": ["<all_urls>"],
       "exclude_globs": ["http*://www.google.*", "*hacheck.tel.fer.hr*"],
       "css": ["main.css"],
-      "js": ["script.js"],
+      "js": ["script.js", "XHRHandler.js"],
       "all_frames": true
     }
   ],
