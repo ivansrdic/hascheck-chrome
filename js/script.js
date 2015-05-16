@@ -26,9 +26,15 @@ function getInputValue(newTextbox) {
 	clearTimeout(editors[editorID].timeoutHandle);
 	editors[editorID].timeoutHandle = setTimeout(createXMLRequest, 2000, editorID);
 
+
 	//If the textbox is a div or body(inside iframe), remove all span/div tags (those are the only ones that should be there), else it is a textarea or input
 	if(!editors[editorID].contentEditable) {
 		editors[editorID].newInputValue = editors[editorID].textbox.value;
+		editors[editorID].editorDiv.innerHTML = editors[editorID].newInputValue;
+		refreshEditorDivSize(editorID);
+		refreshEditorDivPosition(editorID);
+		refreshEditorDivScroll(editorID);
+		markErrors(editorID);
 	} else {
 		editors[editorID].newInputValue = editors[editorID].textbox.innerText;
 		editors[editorID].editorDiv = editors[editorID].textbox;
@@ -51,7 +57,7 @@ function newBoundaryRegExp(search, flags) {
 }
 
 // TODO: Enable faster error marking? 
-/*
+
 function markErrors(editorID) {
 	if(!editors[editorID].contentEditable) {
 		var newInnerHTML = editors[editorID].editorDiv.innerHTML;
@@ -62,7 +68,7 @@ function markErrors(editorID) {
 			}
 		};
 		editors[editorID].editorDiv.innerHTML = newInnerHTML;
-	} else {
+	} else {/*
 		var textNodes = getTextNodes(editorID);
 		var newTextNodes;
 		for (var i = 0; i < errors.length; i++) {
@@ -77,11 +83,11 @@ function markErrors(editorID) {
 					}
 				}
 			}
-		}
+		}*/
 	}
 
 	getElements(editorID);
-}*/
+}
 
 /**
 *** Prepares the style of the textbox and places a background editor div.
@@ -363,12 +369,7 @@ function checkErrors(editorID, response) {
 	if(editors[editorID].contentEditable) {
 		var textNodes = getTextNodes(editorID);
 		var newTextNodes;
-	} else {
-		editors[editorID].editorDiv.innerHTML = editors[editorID].newInputValue;
-		refreshEditorDivSize(editorID);
-		refreshEditorDivPosition(editorID);
-		refreshEditorDivScroll(editorID);
-	}	
+	}
 	for(var i = 0; i < newErrors.length; i++) {
 		for(var j = 0; j < errors.length; j++) {
 			if(errors[j].suspicious == newErrors[i].getElementsByTagName("suspicious")[0].textContent) {
