@@ -1,22 +1,22 @@
 /**
  * Creates a new XMLHttpRequest
  */
-function createXmlRequest() {
-	clearTimeout(timeoutHandle);	
+function createXMLRequest(editorID) {
+	clearTimeout(editors[editorID].timeoutHandle);	
 
-	var diff = textDiff(inputValue, newInputValue);
+	var diff = textDiff(editors[editorID].inputValue, editors[editorID].newInputValue);
 	
-	var output = newInputValue.slice(diff[0], diff[0] + diff[2]);
+	var output = editors[editorID].newInputValue.slice(diff[0], diff[0] + diff[2]);
 
 	if(output) {
 		var xhr = new XMLHttpRequest();
-		xhr.onreadystatechange = checkReadyStateChange;
+		addReadyStateChangeHandler(editorID, xhr);
 		xhr.open("POST", "https://hacheck.tel.fer.hr/xml.pl", true);
 		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 		xhr.send("textarea=" + output);
 		requestTime = (new Date).getTime();
 	}
-	inputValue = newInputValue;
+	editors[editorID].inputValue = editors[editorID].newInputValue;
 }
 
 /**
@@ -37,16 +37,18 @@ function textDiff(a, b) {
  * Checks if the ready state change signals a successful connection with the server and gets the response
  * @param  {[type]} xhrEvent Event triggered by a readystate change of the XMLHttpRequest
  */
-function checkReadyStateChange(xhrEvent) {
-	//try {
-		if(xhrEvent.target.readyState == 4) {
-			if(xhrEvent.target.status == 200) {
-				checkErrors(xhrEvent.target);
-			} else {
-				console.log("Xml request error code " + xhrEvent.target.status + ". Problem connecting to the hashcheck server.");
-			}				
-		}
-	//} catch (e) {
-	//	 console.log("Caught Exception: " + e.description);
-	//}
+function addReadyStateChangeHandler(editorID, xhr) {
+	xhr.onreadystatechange = function(xhrEvent) {
+		//try {
+			if(xhrEvent.target.readyState == 4) {
+				if(xhrEvent.target.status == 200) {
+					checkErrors(editorID, xhrEvent.target);
+				} else {
+					console.log("Xml request error code " + xhrEvent.target.status + ". Problem connecting to the hashcheck server.");
+				}				
+			}
+		//} catch (e) {
+		//	 console.log("Caught Exception: " + e.description);
+		//}
+	}
 }
