@@ -1,8 +1,10 @@
 /**
-*** TODO: 	ubrzaj (ne pretražuje sve), uredi main.html, google docs?, uljepšaj kod - OOP, fizička odvojenost itd.
+*** TODO: 	uredi main.html, google docs?, uljepšaj kod - OOP, fizička odvojenost itd.
+***			loading ikonica u donji desni rub editora, opcije za kontekstualno u main.html
  */
 
 var requestTime;
+var loader;
 
 /**
 *** Gets input value from contentscript oninput event listener and find the new part of the input.
@@ -16,7 +18,7 @@ function getInputValue(newTextbox) {
 			editorID = editors.length;
 			editors.push(new Editor(newTextbox, editors.length));
 			prepareEditor(editorID);
-			preparePopup(editorID);
+			if(editorID == 0) preparePopup(editorID);
 		} else {
 			editorID = newTextbox.getAttribute('data-hascheck-editor-id');
 		}
@@ -26,20 +28,20 @@ function getInputValue(newTextbox) {
 	clearTimeout(editors[editorID].timeoutHandle);
 	editors[editorID].timeoutHandle = setTimeout(createXMLRequest, 2000, editorID);
 
-
 	//If the textbox is a div or body(inside iframe), remove all span/div tags (those are the only ones that should be there), else it is a textarea or input
 	if(!editors[editorID].contentEditable) {
+		if(editorID == 0) prepareLoader(editorID);
 		editors[editorID].newInputValue = editors[editorID].textbox.value;
 		editors[editorID].editorDiv.innerHTML = editors[editorID].newInputValue;
 		refreshEditorDivSize(editorID);
-		refreshEditorDivPosition(editorID);
 		refreshEditorDivScroll(editorID);
 		markErrors(editorID);
 	} else {
 		editors[editorID].newInputValue = editors[editorID].textbox.innerText;
 		editors[editorID].editorDiv = editors[editorID].textbox;
+		if(editorID == 0) prepareLoader(editorID);
 	}
-
+	refreshEditorDivPosition(editorID);
 	//Splits the new input by whitespace to determine the number of words.
 	var arr = editors[editorID].newInputValue.match(newBoundaryRegExp("[a-zčćžšđA-ZČĆŽŠĐ]+", "g"));
 	if((arr != null) && (arr.length % 5 == 0)) {
@@ -156,10 +158,8 @@ function prepareEditor(editorID) {
 		});
 		editors[editorID].textbox.addEventListener("input", function(e) {
 			if(!editors[editorID].flag) {
-				console.log('test1');
 				var node = editors[editorID].currentDocument.getSelection().anchorNode.parentNode;
 				if(node.className.indexOf("hascheck-error") > -1) {
-					console.log('test2');
 					var position = editors[editorID].currentDocument.getSelection().anchorOffset;
 					var textNode = editors[editorID].currentDocument.createTextNode(node.innerText);
 					node.parentNode.insertBefore(textNode, node);
@@ -179,7 +179,13 @@ function prepareEditor(editorID) {
 	}
 	editors[editorID].textbox.addEventListener("mousemove", checkHoverEvent);
 	editors[editorID].textbox.addEventListener("mouseout", checkHoverEvent);
-	editors[editorID].textbox.addEventListener("scroll", refreshEditorDivScroll(editorID));
+	editors[editorID].textbox.addEventListener("scroll", function(e) {
+		if(!editors[editorID].contentEditable) {
+			editors[editorID].editorDiv.scrollTop = editors[editorID].textbox.scrollTop;
+			editors[editorID].editorDiv.scrollLeft = editors[editorID].textbox.scrollLeft;
+		}
+		refreshLoader(editorID);
+	});
 }
 
 /**
@@ -190,6 +196,7 @@ function refreshEditorDivScroll(editorID) {
 		editors[editorID].editorDiv.scrollTop = editors[editorID].textbox.scrollTop;
 		editors[editorID].editorDiv.scrollLeft = editors[editorID].textbox.scrollLeft;
 	}
+	refreshLoader(editorID);
 }
 
 /**
@@ -200,6 +207,8 @@ function refreshEditorDivSize(editorID) {
 		editors[editorID].editorDiv.style.width = editors[editorID].textbox.offsetWidth + "px";
 		editors[editorID].editorDiv.style.height = editors[editorID].textbox.offsetHeight + "px";
 	}
+
+	refreshLoader(editorID);
 }
 
 function refreshEditorDivPosition(editorID) {
@@ -211,6 +220,8 @@ function refreshEditorDivPosition(editorID) {
 	var position = editors[editorID].editorDiv.getBoundingClientRect();
 	editors[editorID].editorDiv.positionX = position.left;
 	editors[editorID].editorDiv.positionY = position.top;
+
+	refreshLoader(editorID);
 }
 
 /**
@@ -246,6 +257,75 @@ function preparePopup(editorID) {
 	errorPopupFooter.appendChild(span);
 	errorPopup.appendChild(errorPopupFooter);
 	editors[editorID].currentDocument.body.parentNode.insertBefore(errorPopup, editors[editorID].currentDocument.body.nextSibling);
+}
+
+function refreshPopup(editorID, errorSpan) {
+	var error = errors[errorSpan.getAttribute('data-error-number')]
+	var list = editors[editorID].currentDocument.createerrorSpan('ul');
+	var listItem;
+
+	errorPopup.style.left = (errorSpan.offsetLeft + editors[editorID].editorDiv.positionX - editors[editorID].editorDiv.scrollLeft + editors[editorID].currentDocument.defaultView.pageXOffset) + "px";
+	errorPopup.style.top = (errorSpan.offsetTop + editors[editorID].editorDiv.positionY - editors[editorID].editorDiv.scrollTop + editors[editorID].currentDocument.defaultView.pageYOffset + 13) + "px";
+	if(errorPopup.children[0].tagName == "UL") {
+		errorPopup.removeChild(errorPopup.children[0]);
+	}
+	if(error.suggestions) {
+		for (var i = 0; i < error.suggestions.length; i++) {
+			listItem = editors[editorID].currentDocument.createElement('li');
+			listItem.innerHTML = '<span class="error">' + error.suspicious + '</span><span class="arrow"> → </span><span class="correction">' + error.suggestions[i] + '</span>';
+			
+			listItem.addEventListener('click', function (e) {
+				if(e.target.tagName == "SPAN") {
+					if(e.target.className == "correction") {
+						hovered.outerHTML = e.target.textContent;
+					} else {
+						hovered.outerHTML = e.target.parentElement.children[2].textContent;
+					}
+
+					if(!editors[editorID].contentEditable) {
+						editors[editorID].textbox.value = editors[editorID].editorDiv.textContent;
+						inputValue = editors[editorID].textbox.value;
+					} else {
+						inputValue = editors[editorID].textbox.textContent;
+					}
+					errorPopup.style.display = "none";
+					setTimeout(function(editorID) {
+						clearTimeout(editors[editorID].mouseoutTimer);
+					}, 500, editorID);
+				}
+			});
+			list.appendChild(listItem);
+		};
+	} else {
+		list.innerHTML = 'Nema prijedloga';
+	}
+
+	errorPopup.insertBefore(list, errorPopup.firstChild);
+	errorPopup.lastChild.lastChild.addEventListener("click", function() {
+		errors[errorSpan.getAttribute('data-error-number')].ignored = true;
+		errorPopup.style.display = "none";
+		getInputValue(null);
+	}, true);
+	errorPopup.style.display = "block";
+	if(((errorPopup.clientHeight + errorPopup.offsetTop - editors[editorID].currentDocument.defaultView.pageYOffset - editors[editorID].currentDocument.defaultView.innerHeight - 50) > 0) && ((errorPopup.clientHeight + errorPopup.offsetTop - editors[editorID].currentDocument.defaultView.pageYOffset - editors[editorID].currentDocument.defaultView.innerHeight - 50) > (errorPopup.clientHeight - errorPopup.offsetTop + 16 + editors[editorID].currentDocument.defaultView.pageYOffset))) {
+		errorPopup.style.top = (errorSpan.offsetTop + editors[editorID].editorDiv.positionY - editors[editorID].editorDiv.scrollTop + editors[editorID].currentDocument.defaultView.pageYOffset - errorPopup.clientHeight - 3) + "px";
+	}
+	if(editors[editorID].currentDocument.defaultView.innerWidth - errorPopup.offsetLeft - errorPopup.clientWidth < 0) {
+		errorPopup.style.left = (errorPopup.offsetLeft + (editors[editorID].currentDocument.defaultView.innerWidth - errorPopup.offsetLeft - errorPopup.clientWidth)) + "px";
+	}
+}
+
+function prepareLoader(editorID) {
+	loader = editors[editorID].currentDocument.createElement("div");
+	loader.className = "hascheck-loader";
+	loader.style.display = "none";
+	refreshLoader(editorID);
+	editors[editorID].currentDocument.body.parentNode.insertBefore(loader, editors[editorID].currentDocument.body.nextSibling);
+}
+
+function refreshLoader(editorID) {
+	loader.style.top = editors[editorID].editorDiv.positionY + editors[editorID].editorDiv.offsetHeight - 20 + "px";
+	loader.style.left = editors[editorID].editorDiv.positionX + editors[editorID].editorDiv.offsetWidth - 20 + "px";
 }
 
 /**
@@ -300,62 +380,6 @@ function checkHoverEvent(e) {
 				}
 			}
 		}
-	}
-}
-
-function refreshPopup(editorID, element) {
-	var error = errors[element.getAttribute('data-error-number')]
-	var list = editors[editorID].currentDocument.createElement('ul');
-	var listItem;
-
-	errorPopup.style.left = (element.offsetLeft + editors[editorID].editorDiv.positionX - editors[editorID].editorDiv.scrollLeft + editors[editorID].currentDocument.defaultView.pageXOffset) + "px";
-	errorPopup.style.top = (element.offsetTop + editors[editorID].editorDiv.positionY - editors[editorID].editorDiv.scrollTop + editors[editorID].currentDocument.defaultView.pageYOffset + 13) + "px";
-	if(errorPopup.children[0].tagName == "UL") {
-		errorPopup.removeChild(errorPopup.children[0]);
-	}
-	if(error.suggestions) {
-		for (var i = 0; i < error.suggestions.length; i++) {
-			listItem = editors[editorID].currentDocument.createElement('li');
-			listItem.innerHTML = '<span class="error">' + error.suspicious + '</span><span class="arrow"> → </span><span class="correction">' + error.suggestions[i] + '</span>';
-			
-			listItem.addEventListener('click', function (e) {
-				if(e.target.tagName == "SPAN") {
-					if(e.target.className == "correction") {
-						hovered.outerHTML = e.target.textContent;
-					} else {
-						hovered.outerHTML = e.target.parentElement.children[2].textContent;
-					}
-
-					if(!editors[editorID].contentEditable) {
-						editors[editorID].textbox.value = editors[editorID].editorDiv.textContent;
-						inputValue = editors[editorID].textbox.value;
-					} else {
-						inputValue = editors[editorID].textbox.textContent;
-					}
-					errorPopup.style.display = "none";
-					setTimeout(function(editorID) {
-						clearTimeout(editors[editorID].mouseoutTimer);
-					}, 500, editorID);
-				}
-			});
-			list.appendChild(listItem);
-		};
-	} else {
-		list.innerHTML = 'Nema prijedloga';
-	}
-
-	errorPopup.insertBefore(list, errorPopup.firstChild);
-	errorPopup.lastChild.lastChild.addEventListener("click", function() {
-		errors[element.getAttribute('data-error-number')].ignored = true;
-		errorPopup.style.display = "none";
-		getInputValue(null);
-	}, true);
-	errorPopup.style.display = "block";
-	if(((errorPopup.clientHeight + errorPopup.offsetTop - editors[editorID].currentDocument.defaultView.pageYOffset - editors[editorID].currentDocument.defaultView.innerHeight - 50) > 0) && ((errorPopup.clientHeight + errorPopup.offsetTop - editors[editorID].currentDocument.defaultView.pageYOffset - editors[editorID].currentDocument.defaultView.innerHeight - 50) > (errorPopup.clientHeight - errorPopup.offsetTop + 16 + editors[editorID].currentDocument.defaultView.pageYOffset))) {
-		errorPopup.style.top = (element.offsetTop + editors[editorID].editorDiv.positionY - editors[editorID].editorDiv.scrollTop + editors[editorID].currentDocument.defaultView.pageYOffset - errorPopup.clientHeight - 3) + "px";
-	}
-	if(editors[editorID].currentDocument.defaultView.innerWidth - errorPopup.offsetLeft - errorPopup.clientWidth < 0) {
-		errorPopup.style.left = (errorPopup.offsetLeft + (editors[editorID].currentDocument.defaultView.innerWidth - errorPopup.offsetLeft - errorPopup.clientWidth)) + "px";
 	}
 }
 

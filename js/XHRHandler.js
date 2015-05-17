@@ -15,6 +15,7 @@ function createXMLRequest(editorID) {
 		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 		xhr.send("textarea=" + output);
 		requestTime = (new Date).getTime();
+		loader.style.display = "block";
 	}
 	editors[editorID].inputValue = editors[editorID].newInputValue;
 }
@@ -35,13 +36,14 @@ function textDiff(a, b) {
 
 /**
  * Checks if the ready state change signals a successful connection with the server and gets the response
- * @param  {[type]} xhrEvent Event triggered by a readystate change of the XMLHttpRequest
+ * @param  {[type]} xhrEvent Event triggered by a readystate change of the XMLHttpRequests
  */
 function addReadyStateChangeHandler(editorID, xhr) {
 	xhr.onreadystatechange = function(xhrEvent) {
 		//try {
 			if(xhrEvent.target.readyState == 4) {
 				if(xhrEvent.target.status == 200) {
+					loader.style.display = "none";
 					checkErrors(editorID, xhrEvent.target);
 				} else {
 					console.log("Xml request error code " + xhrEvent.target.status + ". Problem connecting to the hashcheck server.");
