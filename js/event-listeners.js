@@ -47,8 +47,8 @@
 		for(var i = 0; i < editors.length; i++) {
 			setTimeout(function(editorID) {
 				if (typeof editors[editorID] !== "undefined" && typeof editors[editorID].textbox !== "undefined" && 
-					((!editors[editorID].contentEditable && editors[editorID].textbox.value == "") || 
-					 (editors[editorID].contentEditable && editors[editorID].textbox.textContent == ""))) {
+					((!editors[editorID].contentEditable && (editors[editorID].textbox.value == "" || editors[editorID].textbox.value != editors[editorID].editorDiv.textContent)) || 
+					 (editors[editorID].contentEditable && (editors[editorID].textbox.textContent == "")))) {
 			    	editors[editorID].editorDiv.innerHTML = "";
 			    }
 			}, 10, i);
@@ -56,10 +56,10 @@
 	}, true);
 
 	window.addEventListener("keyup", function(e) {
-		for(var i = 0; i < editors.length; i++) {
-		    if (e.keyCode == 13 && typeof editors[i] !== "undefined" && typeof editors[i].textbox !== "undefined" && 
-		    	((typeof editors[i].textbox.value != "undefined" && editors[i].textbox.value == "") || 
-		    	 (typeof editors[i].textbox.textContent != "undefined" && editors[i].textbox.textContent == ""))) {
+		for(var editorID = 0; editorID < editors.length; editorID++) {
+		    if (e.keyCode == 13 && typeof editors[editorID] !== "undefined" && typeof editors[editorID].textbox !== "undefined" && 
+		    	((!editors[editorID].contentEditable && (editors[editorID].textbox.value == "" || editors[editorID].textbox.value != editors[editorID].editorDiv.textContent)) || 
+				 (editors[editorID].contentEditable && (editors[editorID].textbox.textContent == "")))) {
 		    	getInputValue(e.target);
 		    }
 		}

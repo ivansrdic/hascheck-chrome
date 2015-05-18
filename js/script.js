@@ -1,6 +1,5 @@
 /**
 *** TODO: 	uredi main.html, google docs?, uljepšaj kod - OOP, fizička odvojenost itd.
-***			loading ikonica u donji desni rub editora, opcije za kontekstualno u main.html
  */
 
 var requestTime;
@@ -9,7 +8,6 @@ var loader;
 /**
 *** Gets input value from contentscript oninput event listener and find the new part of the input.
  */
-
 function getInputValue(newTextbox) {
 	var editorID = null;
 	//If the event fired was from input instead of others, get the textbox.
@@ -30,18 +28,18 @@ function getInputValue(newTextbox) {
 
 	//If the textbox is a div or body(inside iframe), remove all span/div tags (those are the only ones that should be there), else it is a textarea or input
 	if(!editors[editorID].contentEditable) {
-		if(editorID == 0) prepareLoader(editorID);
 		editors[editorID].newInputValue = editors[editorID].textbox.value;
 		editors[editorID].editorDiv.innerHTML = editors[editorID].newInputValue;
-		refreshEditorDivSize(editorID);
-		refreshEditorDivScroll(editorID);
+		if(editors[editorID].newInputValue.substr(editors[editorID].newInputValue.length-1) == "\n") editors[editorID].editorDiv.innerHTML += "\n";
 		markErrors(editorID);
 	} else {
 		editors[editorID].newInputValue = editors[editorID].textbox.innerText;
-		editors[editorID].editorDiv = editors[editorID].textbox;
-		if(editorID == 0) prepareLoader(editorID);
 	}
+
+	refreshEditorDivSize(editorID);
+	refreshEditorDivScroll(editorID);
 	refreshEditorDivPosition(editorID);
+
 	//Splits the new input by whitespace to determine the number of words.
 	var arr = editors[editorID].newInputValue.match(newBoundaryRegExp("[a-zčćžšđA-ZČĆŽŠĐ]+", "g"));
 	if((arr != null) && (arr.length % 5 == 0)) {
@@ -109,21 +107,20 @@ function prepareEditor(editorID) {
 								"; font-size: " + style.getPropertyValue('font-size') + "; text-align: " + style.getPropertyValue('text-align') + 
 								"; padding: " + style.getPropertyValue('padding') + "; border: " + style.getPropertyValue('border') + 
 								"; border-width: " + style.getPropertyValue('border-width') +  "; border-style: " + style.getPropertyValue('border-style') + 
-								/*"; margin: " + style.getPropertyValue('margin') + */"; top: " + editors[editorID].textbox.offsetTop + "px; left: " + editors[editorID].textbox.offsetLeft + 
-								"px; height: " + editors[editorID].textbox.offsetHeight  + "px; width: " + editors[editorID].textbox.offsetWidth  
-								+ "px; background: " + style.getPropertyValue('background-color') + "; box-sizing: " + style.getPropertyValue('box-sizing') + ";";
-		
+								/*"; margin: " + style.getPropertyValue('margin') +*/ "; top: " + editors[editorID].textbox.offsetTop + "px; left: " + editors[editorID].textbox.offsetLeft + 
+								"px; height: " + (editors[editorID].textbox.clientHeight - style.getPropertyValue('padding-top').replace("px", "") - style.getPropertyValue('padding-bottom').replace("px", "")) + 
+								"px; width: " + (editors[editorID].textbox.clientWidth - style.getPropertyValue('padding-right').replace("px", "") - style.getPropertyValue('padding-left').replace("px", "")) +
+								"px; background: " + style.getPropertyValue('background-color') + ";";
 		if(editors[editorID].textbox.tagName == "INPUT") {
-			editors[editorID].editorDiv.style.cssText = editors[editorID].editorDiv.style.cssText + " line-height: " + (editors[editorID].textbox.offsetHeight - style.getPropertyValue('padding-top').replace("px", "")) + "px;";
+			editors[editorID].editorDiv.style.cssText = editors[editorID].editorDiv.style.cssText + " line-height: " + (editors[editorID].textbox.clientHeight - style.getPropertyValue('padding-top').replace("px", "") - style.getPropertyValue('padding-bottom').replace("px", "")) + "px;";
 		} else {
 			editors[editorID].editorDiv.style.cssText = editors[editorID].editorDiv.style.cssText + " line-height: " + style.getPropertyValue('line-height') + ";";
 		}
 		editors[editorID].textbox.parentNode.insertBefore(editors[editorID].editorDiv, editors[editorID].textbox);
-	}
-
-	editors[editorID].textbox.style.cssText = editors[editorID].textbox.style.cssText + "z-index: 1; position: relative; transition: none; background: transparent !important;";
-
-	if(editors[editorID].contentEditable) {
+		editors[editorID].textbox.style.cssText = editors[editorID].textbox.style.cssText + "z-index: 1; position: relative; transition: none; background: transparent !important;";
+	} else {
+		
+		editors[editorID].editorDiv = editors[editorID].textbox;
 		editors[editorID].textbox.addEventListener("keypress", function(e) {
 			var node = editors[editorID].currentDocument.getSelection().anchorNode.parentNode;
 			if(node.className.indexOf("hascheck-error") > -1) {
@@ -177,6 +174,7 @@ function prepareEditor(editorID) {
 			editors[editorID].flag = false;
 		});
 	}
+	if(editorID == 0) prepareLoader(editorID);
 	editors[editorID].textbox.addEventListener("mousemove", checkHoverEvent);
 	editors[editorID].textbox.addEventListener("mouseout", checkHoverEvent);
 	editors[editorID].textbox.addEventListener("scroll", function(e) {
@@ -204,8 +202,9 @@ function refreshEditorDivScroll(editorID) {
  */
 function refreshEditorDivSize(editorID) {
 	if(!editors[editorID].contentEditable) {
-		editors[editorID].editorDiv.style.width = editors[editorID].textbox.offsetWidth + "px";
-		editors[editorID].editorDiv.style.height = editors[editorID].textbox.offsetHeight + "px";
+		var style = editors[editorID].currentDocument.defaultView.getComputedStyle(editors[editorID].textbox, null);
+		editors[editorID].editorDiv.style.width = (editors[editorID].textbox.clientWidth - style.getPropertyValue('padding-left').replace("px", "") - style.getPropertyValue('padding-right').replace("px", "")) + "px";
+		editors[editorID].editorDiv.style.height = (editors[editorID].textbox.clientHeight - style.getPropertyValue('padding-top').replace("px", "") - style.getPropertyValue('padding-bottom').replace("px", "")) + "px";
 	}
 
 	refreshLoader(editorID);
@@ -213,11 +212,11 @@ function refreshEditorDivSize(editorID) {
 
 function refreshEditorDivPosition(editorID) {
 	if(!editors[editorID].contentEditable) {
-		editors[editorID].editorDiv.style.top = editors[editorID].textbox.offsetTop + "px";
-		editors[editorID].editorDiv.style.left = editors[editorID].textbox.offsetLeft + "px";
+		var style = editors[editorID].currentDocument.defaultView.getComputedStyle(editors[editorID].textbox, null);
+		editors[editorID].editorDiv.style.top = (editors[editorID].textbox.offsetTop) + "px";
+		editors[editorID].editorDiv.style.left = (editors[editorID].textbox.offsetLeft) + "px";
 	}
-
-	var position = editors[editorID].editorDiv.getBoundingClientRect();
+	var position = editors[editorID].textbox.getBoundingClientRect();
 	editors[editorID].editorDiv.positionX = position.left;
 	editors[editorID].editorDiv.positionY = position.top;
 
@@ -257,11 +256,20 @@ function preparePopup(editorID) {
 	errorPopupFooter.appendChild(span);
 	errorPopup.appendChild(errorPopupFooter);
 	editors[editorID].currentDocument.body.parentNode.insertBefore(errorPopup, editors[editorID].currentDocument.body.nextSibling);
+	errorPopup.lastChild.lastChild.addEventListener("click", function() {
+		errors[hovered.getAttribute('data-error-number')].ignored = true;
+		for(var i = 0; i < editors.length; i++) {
+			var ignoredErrorElements = editors[i].editorDiv.getElementsByTagName("SPAN");
+			var len = ignoredErrorElements.length
+			for(var j = 0; j < len; j++) if(ignoredErrorElements[0].getAttribute('data-error-number') == hovered.getAttribute('data-error-number')) ignoredErrorElements[0].outerHTML = ignoredErrorElements[0].innerHTML;
+		}
+		errorPopup.style.display = "none";
+	}, true);
 }
 
 function refreshPopup(editorID, errorSpan) {
 	var error = errors[errorSpan.getAttribute('data-error-number')]
-	var list = editors[editorID].currentDocument.createerrorSpan('ul');
+	var list = editors[editorID].currentDocument.createElement('ul');
 	var listItem;
 
 	errorPopup.style.left = (errorSpan.offsetLeft + editors[editorID].editorDiv.positionX - editors[editorID].editorDiv.scrollLeft + editors[editorID].currentDocument.defaultView.pageXOffset) + "px";
@@ -301,11 +309,6 @@ function refreshPopup(editorID, errorSpan) {
 	}
 
 	errorPopup.insertBefore(list, errorPopup.firstChild);
-	errorPopup.lastChild.lastChild.addEventListener("click", function() {
-		errors[errorSpan.getAttribute('data-error-number')].ignored = true;
-		errorPopup.style.display = "none";
-		getInputValue(null);
-	}, true);
 	errorPopup.style.display = "block";
 	if(((errorPopup.clientHeight + errorPopup.offsetTop - editors[editorID].currentDocument.defaultView.pageYOffset - editors[editorID].currentDocument.defaultView.innerHeight - 50) > 0) && ((errorPopup.clientHeight + errorPopup.offsetTop - editors[editorID].currentDocument.defaultView.pageYOffset - editors[editorID].currentDocument.defaultView.innerHeight - 50) > (errorPopup.clientHeight - errorPopup.offsetTop + 16 + editors[editorID].currentDocument.defaultView.pageYOffset))) {
 		errorPopup.style.top = (errorSpan.offsetTop + editors[editorID].editorDiv.positionY - editors[editorID].editorDiv.scrollTop + editors[editorID].currentDocument.defaultView.pageYOffset - errorPopup.clientHeight - 3) + "px";
@@ -313,19 +316,6 @@ function refreshPopup(editorID, errorSpan) {
 	if(editors[editorID].currentDocument.defaultView.innerWidth - errorPopup.offsetLeft - errorPopup.clientWidth < 0) {
 		errorPopup.style.left = (errorPopup.offsetLeft + (editors[editorID].currentDocument.defaultView.innerWidth - errorPopup.offsetLeft - errorPopup.clientWidth)) + "px";
 	}
-}
-
-function prepareLoader(editorID) {
-	loader = editors[editorID].currentDocument.createElement("div");
-	loader.className = "hascheck-loader";
-	loader.style.display = "none";
-	refreshLoader(editorID);
-	editors[editorID].currentDocument.body.parentNode.insertBefore(loader, editors[editorID].currentDocument.body.nextSibling);
-}
-
-function refreshLoader(editorID) {
-	loader.style.top = editors[editorID].editorDiv.positionY + editors[editorID].editorDiv.offsetHeight - 20 + "px";
-	loader.style.left = editors[editorID].editorDiv.positionX + editors[editorID].editorDiv.offsetWidth - 20 + "px";
 }
 
 /**

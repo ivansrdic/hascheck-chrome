@@ -15,7 +15,7 @@ function createXMLRequest(editorID) {
 		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 		xhr.send("textarea=" + output);
 		requestTime = (new Date).getTime();
-		loader.style.display = "block";
+		changeLoaderDisplay(editorID, true);
 	}
 	editors[editorID].inputValue = editors[editorID].newInputValue;
 }
@@ -43,7 +43,7 @@ function addReadyStateChangeHandler(editorID, xhr) {
 		//try {
 			if(xhrEvent.target.readyState == 4) {
 				if(xhrEvent.target.status == 200) {
-					loader.style.display = "none";
+					changeLoaderDisplay(editorID, false);
 					checkErrors(editorID, xhrEvent.target);
 				} else {
 					console.log("Xml request error code " + xhrEvent.target.status + ". Problem connecting to the hashcheck server.");
@@ -53,4 +53,44 @@ function addReadyStateChangeHandler(editorID, xhr) {
 		//	 console.log("Caught Exception: " + e.description);
 		//}
 	}
+}
+
+function prepareLoader(editorID) {
+	loader = editors[editorID].currentDocument.createElement("div");
+	loader.className = "hascheck-loader";
+	loader.style.display = "none";
+	loader.backgroundPositionX = 0;
+	refreshLoader(editorID);
+	editors[editorID].currentDocument.body.parentNode.insertBefore(loader, editors[editorID].currentDocument.body.nextSibling);
+}
+
+function refreshLoader(editorID) {
+	loader.style.top = editors[editorID].editorDiv.positionY + editors[editorID].editorDiv.offsetHeight - 20 + "px";
+	loader.style.left = editors[editorID].editorDiv.positionX + editors[editorID].editorDiv.offsetWidth - 20 + "px";
+}
+
+function changeLoaderDisplay(editorID, displayStatus) {
+	if(editors[editorID].editorDiv.offsetHeight > 30 && editors[editorID].editorDiv.offsetWidth > 30) {
+		if(displayStatus) {
+			startLoading();
+			loader.style.display = "block";
+		} else {
+			loader.style.display = "none";
+			stopLoading();
+		}
+	}
+}
+
+function startLoading() {
+	stopLoading();
+	loader.loadingInterval = setInterval(function() {
+		loader.backgroundPositionX = (loader.backgroundPositionX + 20) % 240;
+		loader.style.backgroundPosition = (-loader.backgroundPositionX)+'px 0px';
+	}, 50)
+}
+
+function stopLoading() {
+	clearInterval(loader.loadingInterval);
+	loader.backgroundPositionX = 0;
+	loader.style.backgroundPosition = "0px 0px";
 }
