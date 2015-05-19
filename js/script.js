@@ -1,5 +1,6 @@
 /**
-*** TODO: 	uredi main.html, google docs?, uljepšaj kod - OOP, fizička odvojenost itd.
+*** TODO: 	uredi main.html, google docs?, OOP, fizička odvojenost, modular js.
+***			opcije za kontekstualno u main.html, dodaj u rječnik
  */
 
 var requestTime;

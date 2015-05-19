@@ -1,6 +1,6 @@
 //window.addEventListener("load", function() {
 	window.addEventListener("input", function(e) {
-		if(e.target.getAttribute('type') != "password" && e.target.getAttribute('type') != "email"/* && (e.target.tagName == "TEXTAREA" || (e.target.offsetHeight > 20 && e.target.offsetWidth > 50))*/) {
+		if(e.target.getAttribute('type') != "password" && e.target.getAttribute('type') != "email") {
 			getInputValue(e.target);
 		}
 	}, true);
@@ -46,12 +46,13 @@
 	window.addEventListener("mouseup", function() {
 		for(var i = 0; i < editors.length; i++) {
 			setTimeout(function(editorID) {
+				if(!document.contains(editors[editorID].textbox)) editors[editorID].editorDiv.style.display = "none";
 				if (typeof editors[editorID] !== "undefined" && typeof editors[editorID].textbox !== "undefined" && 
 					((!editors[editorID].contentEditable && (editors[editorID].textbox.value == "" || editors[editorID].textbox.value != editors[editorID].editorDiv.textContent)) || 
 					 (editors[editorID].contentEditable && (editors[editorID].textbox.textContent == "")))) {
 			    	editors[editorID].editorDiv.innerHTML = "";
 			    }
-			}, 10, i);
+			}, 50, i);
 		}
 	}, true);
 
