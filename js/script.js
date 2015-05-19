@@ -385,47 +385,49 @@ function checkErrorsJSON(editorID, response) {
 		var textNodes = getTextNodes(editorID);
 		var newTextNodes;
 	}
-	for(var i = 0; i < newErrors.length; i++) {
-		for(var j = 0; j < errors.length; j++) {
-			if(errors[j].suspicious == newErrors[i].suspicious) {
-				errorExists = true;
-				tmpErrorCount = errorCount;
-				errorCount = j;
-				break;
-			}
-		}
-		if(!errorExists) {
-			errors.push(new Error(newErrors[i].length, newErrors[i].suspicious));
-			if(newErrors[i].suggestions) {
-				for(var k = 0; k < newErrors[i].suggestions.length && k < 5; k++) {
-					errors[errorCount].suggestions.push(newErrors[i].suggestions[k]);
+	if(typeof newErrors != "undefined") {
+		for(var i = 0; i < newErrors.length; i++) {
+			for(var j = 0; j < errors.length; j++) {
+				if(errors[j].suspicious == newErrors[i].suspicious) {
+					errorExists = true;
+					tmpErrorCount = errorCount;
+					errorCount = j;
+					break;
 				}
-			} else {
-				errors[errorCount].suggestions = null;
 			}
-		}
-		if(!errors[errorCount].ignored) {
-			if(!editors[editorID].contentEditable) {
-				editors[editorID].editorDiv.innerHTML = editors[editorID].editorDiv.innerHTML.replace(newBoundaryRegExp(errors[errorCount].suspicious, "g"), 
-														'$1<span data-error-number="' + errorCount + '" data-hovered="false" class="hascheck-error">$2</span>');
-			} else {
-				for (var m = 0; m < textNodes.length; m++) {
-					if(textNodes[m].parentNode.className.indexOf("hascheck-error") == -1) {
-						if(newBoundaryRegExp(errors[errorCount].suspicious, "g").test(textNodes[m].textContent)) {
-							newTextNodes = markError(editorID, textNodes[m], errorCount);
-							textNodes[m] = newTextNodes[1];
-							textNodes.splice(m, 0, newTextNodes[0]);
+			if(!errorExists) {
+				errors.push(new Error(newErrors[i].length, newErrors[i].suspicious));
+				if(newErrors[i].suggestions) {
+					for(var k = 0; k < newErrors[i].suggestions.length && k < 5; k++) {
+						errors[errorCount].suggestions.push(newErrors[i].suggestions[k]);
+					}
+				} else {
+					errors[errorCount].suggestions = null;
+				}
+			}
+			if(!errors[errorCount].ignored) {
+				if(!editors[editorID].contentEditable) {
+					editors[editorID].editorDiv.innerHTML = editors[editorID].editorDiv.innerHTML.replace(newBoundaryRegExp(errors[errorCount].suspicious, "g"), 
+															'$1<span data-error-number="' + errorCount + '" data-hovered="false" class="hascheck-error">$2</span>');
+				} else {
+					for (var m = 0; m < textNodes.length; m++) {
+						if(textNodes[m].parentNode.className.indexOf("hascheck-error") == -1) {
+							if(newBoundaryRegExp(errors[errorCount].suspicious, "g").test(textNodes[m].textContent)) {
+								newTextNodes = markError(editorID, textNodes[m], errorCount);
+								textNodes[m] = newTextNodes[1];
+								textNodes.splice(m, 0, newTextNodes[0]);
+							}
 						}
 					}
+					
 				}
-				
 			}
-		}
-		if(errorExists) {
-			errorCount = tmpErrorCount;
-			errorExists = false;
-		} else {
-			errorCount++;
+			if(errorExists) {
+				errorCount = tmpErrorCount;
+				errorExists = false;
+			} else {
+				errorCount++;
+			}
 		}
 	}
 	getElements(editorID);
