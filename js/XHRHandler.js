@@ -1,7 +1,7 @@
 /**
  * Creates a new XMLHttpRequest
  */
-function createXMLRequest(editorID) {
+function createXMLHttpRequest(editorID, responseType) {
 	clearTimeout(editors[editorID].timeoutHandle);	
 
 	var diff = textDiff(editors[editorID].inputValue, editors[editorID].newInputValue);
@@ -11,7 +11,7 @@ function createXMLRequest(editorID) {
 	if(output) {
 		var xhr = new XMLHttpRequest();
 		addReadyStateChangeHandler(editorID, xhr);
-		xhr.open("POST", "https://hacheck.tel.fer.hr/xml.pl", true);
+		xhr.open("POST", "https://hacheck.tel.fer.hr/google/json.pl", true);
 		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 		xhr.send("textarea=" + output);
 		requestTime = (new Date).getTime();
@@ -44,7 +44,7 @@ function addReadyStateChangeHandler(editorID, xhr) {
 			if(xhrEvent.target.readyState == 4) {
 				if(xhrEvent.target.status == 200) {
 					changeLoaderDisplay(editorID, false);
-					checkErrors(editorID, xhrEvent.target);
+					checkErrorsJSON(editorID, xhrEvent.target.response);
 				} else {
 					console.log("Xml request error code " + xhrEvent.target.status + ". Problem connecting to the hashcheck server.");
 				}				

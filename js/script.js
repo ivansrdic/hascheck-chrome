@@ -1,6 +1,6 @@
 /**
-*** TODO: 	uredi main.html, google docs?, OOP, fizička odvojenost, modular js.
-***			opcije za kontekstualno u main.html, dodaj u rječnik
+*** TODO: 	uredi main.html, OOP, fizička odvojenost, modular js.
+***			opcije za kontekstualno u main.html, dodaj u rječnik, prazni tekstnode
  */
 
 var requestTime;
@@ -25,7 +25,7 @@ function getInputValue(newTextbox) {
 
 	//If there is no new input after 2000ms send new input to server.
 	clearTimeout(editors[editorID].timeoutHandle);
-	editors[editorID].timeoutHandle = setTimeout(createXMLRequest, 2000, editorID);
+	editors[editorID].timeoutHandle = setTimeout(createXMLHttpRequest, 2000, editorID);
 
 	//If the textbox is a div or body(inside iframe), remove all span/div tags (those are the only ones that should be there), else it is a textarea or input
 	if(!editors[editorID].contentEditable) {
@@ -45,7 +45,7 @@ function getInputValue(newTextbox) {
 	var arr = editors[editorID].newInputValue.match(newBoundaryRegExp("[a-zčćžšđA-ZČĆŽŠĐ]+", "g"));
 	if((arr != null) && (arr.length % 5 == 0)) {
 		if(!editors[editorID].length) {
-			createXMLRequest(editorID);
+			createXMLHttpRequest(editorID);
 			editors[editorID].length = true;
 		}
 	} else {
@@ -376,9 +376,9 @@ function checkHoverEvent(e) {
 
 var errors = new Errors();
 var errorCount = 0;
-function checkErrors(editorID, response) {
+function checkErrorsJSON(editorID, response) {
 	console.log((new Date).getTime() - requestTime);
-	var newErrors = response.responseXML.getElementsByTagName("results")[0].children;
+	var newErrors = JSON.parse(response).results.error;
 	var errorExists = false;
 	var tmpErrorCount;
 	if(editors[editorID].contentEditable) {
@@ -387,7 +387,7 @@ function checkErrors(editorID, response) {
 	}
 	for(var i = 0; i < newErrors.length; i++) {
 		for(var j = 0; j < errors.length; j++) {
-			if(errors[j].suspicious == newErrors[i].getElementsByTagName("suspicious")[0].textContent) {
+			if(errors[j].suspicious == newErrors[i].suspicious) {
 				errorExists = true;
 				tmpErrorCount = errorCount;
 				errorCount = j;
@@ -395,10 +395,10 @@ function checkErrors(editorID, response) {
 			}
 		}
 		if(!errorExists) {
-			errors.push(new Error(newErrors[i].getElementsByTagName("length")[0].textContent, newErrors[i].getElementsByTagName("suspicious")[0].textContent));
-			if(newErrors[i].getElementsByTagName("suggestions")[0]) {
-				for(var k = 0; k < newErrors[i].getElementsByTagName("suggestions")[0].children.length && k < 5; k++) {
-					errors[errorCount].suggestions.push(newErrors[i].getElementsByTagName("suggestions")[0].children[k].textContent);
+			errors.push(new Error(newErrors[i].length, newErrors[i].suspicious));
+			if(newErrors[i].suggestions) {
+				for(var k = 0; k < newErrors[i].suggestions.length && k < 5; k++) {
+					errors[errorCount].suggestions.push(newErrors[i].suggestions[k]);
 				}
 			} else {
 				errors[errorCount].suggestions = null;
@@ -429,6 +429,7 @@ function checkErrors(editorID, response) {
 		}
 	}
 	getElements(editorID);
+	console.log((new Date).getTime() - requestTime);
 }
 
 /**
